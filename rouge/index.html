@@ -1,1 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS LARP - Recrutement Opérationnel</title>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0e1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 15px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 3px solid #7bed9f;
+            background: rgba(123, 237, 159, 0.05);
+        }
+        .header h1 {
+            font-size: 28px;
+            color: #7bed9f;
+            text-shadow: 0 0 20px #7bed9f;
+        }
+        .mission-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .mission-card {
+            background: #151b2e;
+            border: 2px solid #2a3f5f;
+            padding: 20px;
+            cursor: pointer;
+        }
+        .mission-card:hover {
+            border-color: #c77dff;
+            box-shadow: 0 0 20px rgba(199,125,255,.3);
+        }
+        .mission-title { color: #c77dff; font-weight: bold; }
+        .difficulty { font-size: 10px; padding: 4px 10px; }
+        .diff-easy { background: #7bed9f; color:#000 }
+        .diff-medium { background: #ffd43b; color:#000 }
+        .diff-hard { background: #ff6b6b; color:#fff }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.95);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #151b2e;
+            border: 3px solid #c77dff;
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+        }
+        .btn {
+            margin-top: 10px;
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 2px solid #7bed9f;
+            color: #7bed9f;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #7bed9f;
+            color: #000;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <div class="header">
+        <h1>AEGIS LARP – RECRUTEMENT OPÉRATIONNEL</h1>
+        <p>Jeu asynchrone · Sans MJ · Sans règles fixes</p>
+    </div>
+
+    <div class="mission-board" id="missionBoard"></div>
+</div>
+
+<div class="modal" id="missionModal">
+    <div class="modal-content">
+        <h2 id="modalMissionTitle"></h2>
+        <p id="modalMissionDesc"></p>
+        <textarea id="missionResponse" placeholder="Votre réponse..." style="width:100%;height:120px;"></textarea>
+        <button class="btn" onclick="submitMission()">SOUMETTRE</button>
+        <button class="btn" onclick="closeModal()">ANNULER</button>
+    </div>
+</div>
+
+<script>
+const GameData = {
+    player: {
+        name: 'Agent_' + Math.random().toString(36).substr(2,6).toUpperCase(),
+        xp: 0,
+        missions: 0,
+        rank: 'Recrue'
+    },
+    missions: [
+        { id:1, title:'Détecter une fake news', difficulty:'easy', xp:50, description:'Identifier 3 fake news.' },
+        { id:2, title:'Cartographier vos données', difficulty:'easy', xp:60, description:'Lister vos comptes en ligne.' },
+        { id:3, title:'Comprendre un biais cognitif', difficulty:'easy', xp:75, description:'Expliquer un biais.' },
+        { id:4, title:'Analyse critique d’un article', difficulty:'medium', xp:100, description:'Analyser un article.' },
+        { id:5, title:'Comprendre la monnaie', difficulty:'hard', xp:170, description:'Expliquer la création monétaire.' }
+    ],
+    leaderboard: [
+        { name:'Shadow_X7', xp:2450, missions:18, rank:'Opérateur' }
+    ],
+    events: []
+};
+
+let currentMission = null;
+
+function renderMissions() {
+    const board = document.getElementById('missionBoard');
+    board.innerHTML = '';
+    GameData.missions.forEach(m => {
+        const card = document.createElement('div');
+        card.className = 'mission-card';
+        card.innerHTML = `
+            <div class="mission-title">${m.title}</div>
+            <div class="difficulty diff-${m.difficulty}">${m.difficulty.toUpperCase()}</div>
+            <p>${m.description}</p>
+            <p>+${m.xp} XP</p>
+        `;
+        card.onclick = () => openMission(m);
+        board.appendChild(card);
+    });
+}
+
+function openMission(mission) {
+    currentMission = mission;
+    document.getElementById('modalMissionTitle').textContent = mission.title;
+    document.getElementById('modalMissionDesc').textContent = mission.description;
+    document.getElementById('missionModal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('missionModal').classList.remove('active');
+    document.getElementById('missionResponse').value = '';
+}
+
+function submitMission() {
+    if (!currentMission) return;
+    const txt = document.getElementById('missionResponse').value.trim();
+    if (!txt) return alert('Réponse requise');
+
+    GameData.player.xp += currentMission.xp;
+    GameData.player.missions++;
+    saveGame();
+    closeModal();
+    alert(`Mission validée +${currentMission.xp} XP`);
+}
+
+function saveGame() {
+    localStorage.setItem('aegis_larp_game', JSON.stringify(GameData));
+}
+
+function loadGame() {
+    const data = localStorage.getItem('aegis_larp_game');
+    if (data) Object.assign(GameData, JSON.parse(data));
+}
+
+loadGame();
+renderMissions();
+</script>
+</body>
+</html>
 
