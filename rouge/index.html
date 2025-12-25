@@ -1,182 +1,136 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AEGIS LARP - Recrutement Opérationnel</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AEGIS LARP – Recrutement Opérationnel</title>
 
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Courier New', monospace;
-            background: #0a0e1a;
-            color: #e0e0e0;
-            min-height: 100vh;
-            padding: 15px;
-        }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            border: 3px solid #7bed9f;
-            background: rgba(123, 237, 159, 0.05);
-        }
-        .header h1 {
-            font-size: 28px;
-            color: #7bed9f;
-            text-shadow: 0 0 20px #7bed9f;
-        }
-        .mission-board {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        .mission-card {
-            background: #151b2e;
-            border: 2px solid #2a3f5f;
-            padding: 20px;
-            cursor: pointer;
-        }
-        .mission-card:hover {
-            border-color: #c77dff;
-            box-shadow: 0 0 20px rgba(199,125,255,.3);
-        }
-        .mission-title { color: #c77dff; font-weight: bold; }
-        .difficulty { font-size: 10px; padding: 4px 10px; }
-        .diff-easy { background: #7bed9f; color:#000 }
-        .diff-medium { background: #ffd43b; color:#000 }
-        .diff-hard { background: #ff6b6b; color:#fff }
-
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,.95);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal.active { display: flex; }
-        .modal-content {
-            background: #151b2e;
-            border: 3px solid #c77dff;
-            padding: 30px;
-            max-width: 600px;
-            width: 100%;
-        }
-        .btn {
-            margin-top: 10px;
-            width: 100%;
-            padding: 12px;
-            background: transparent;
-            border: 2px solid #7bed9f;
-            color: #7bed9f;
-            cursor: pointer;
-        }
-        .btn:hover {
-            background: #7bed9f;
-            color: #000;
-        }
-    </style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Courier New,monospace;background:#0a0e1a;color:#e0e0e0;padding:15px}
+.container{max-width:1200px;margin:auto}
+.header{text-align:center;margin-bottom:30px;padding:20px;border:3px solid #7bed9f;background:rgba(123,237,159,.05)}
+.header h1{color:#7bed9f;text-shadow:0 0 20px #7bed9f}
+.mission-board{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.mission-card{background:#151b2e;border:2px solid #2a3f5f;padding:20px;cursor:pointer}
+.mission-card:hover{border-color:#c77dff;box-shadow:0 0 20px rgba(199,125,255,.3)}
+.mission-title{color:#c77dff;font-weight:bold;margin-bottom:5px}
+.diff-easy{background:#7bed9f;color:#000;padding:3px 8px;font-size:10px}
+.diff-medium{background:#ffd43b;color:#000;padding:3px 8px;font-size:10px}
+.diff-hard{background:#ff6b6b;color:#fff;padding:3px 8px;font-size:10px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:1000;align-items:center;justify-content:center}
+.modal.active{display:flex}
+.modal-content{background:#151b2e;border:3px solid #c77dff;padding:30px;max-width:600px;width:100%}
+.btn{margin-top:10px;width:100%;padding:12px;border:2px solid #7bed9f;background:none;color:#7bed9f;cursor:pointer}
+.btn:hover{background:#7bed9f;color:#000}
+</style>
 </head>
 
 <body>
 <div class="container">
-    <div class="header">
-        <h1>AEGIS LARP – RECRUTEMENT OPÉRATIONNEL</h1>
-        <p>Jeu asynchrone · Sans MJ · Sans règles fixes</p>
-    </div>
-
-    <div class="mission-board" id="missionBoard"></div>
+<div class="header">
+<h1>AEGIS LARP – RECRUTEMENT OPÉRATIONNEL</h1>
+<p>Jeu asynchrone · Sans MJ · Sans règles fixes</p>
+</div>
+<div class="mission-board" id="missionBoard"></div>
 </div>
 
 <div class="modal" id="missionModal">
-    <div class="modal-content">
-        <h2 id="modalMissionTitle"></h2>
-        <p id="modalMissionDesc"></p>
-        <textarea id="missionResponse" placeholder="Votre réponse..." style="width:100%;height:120px;"></textarea>
-        <button class="btn" onclick="submitMission()">SOUMETTRE</button>
-        <button class="btn" onclick="closeModal()">ANNULER</button>
-    </div>
+<div class="modal-content">
+<h2 id="modalMissionTitle"></h2>
+<p id="modalMissionDesc"></p>
+<textarea id="missionResponse" style="width:100%;height:120px" placeholder="Votre réponse..."></textarea>
+<button class="btn" onclick="submitMission()">SOUMETTRE</button>
+<button class="btn" onclick="closeModal()">ANNULER</button>
+</div>
 </div>
 
 <script>
-const GameData = {
-    player: {
-        name: 'Agent_' + Math.random().toString(36).substr(2,6).toUpperCase(),
-        xp: 0,
-        missions: 0,
-        rank: 'Recrue'
-    },
-    missions: [
-        { id:1, title:'Détecter une fake news', difficulty:'easy', xp:50, description:'Identifier 3 fake news.' },
-        { id:2, title:'Cartographier vos données', difficulty:'easy', xp:60, description:'Lister vos comptes en ligne.' },
-        { id:3, title:'Comprendre un biais cognitif', difficulty:'easy', xp:75, description:'Expliquer un biais.' },
-        { id:4, title:'Analyse critique d’un article', difficulty:'medium', xp:100, description:'Analyser un article.' },
-        { id:5, title:'Comprendre la monnaie', difficulty:'hard', xp:170, description:'Expliquer la création monétaire.' }
-    ],
-    leaderboard: [
-        { name:'Shadow_X7', xp:2450, missions:18, rank:'Opérateur' }
-    ],
-    events: []
+const GameData={
+player:{xp:0,missions:0},
+missions:[
+{ id:1,title:'OSINT: Identifier la cible',difficulty:'easy',xp:50,description:'Utilisez les ressources open-source pour identifier une personne à partir d\'indices fournis.',type:'OSINT',players:23},
+{ id:2,title:'Social Engineering: Extraction d\'info',difficulty:'medium',xp:100,description:'Obtenez une information spécifique d\'une cible sans éveiller les soupçons.',type:'HUMINT',players:12},
+{ id:3,title:'Crypto Challenge: Déchiffrer le message',difficulty:'hard',xp:200,description:'Un message chiffré a été intercepté. Déchiffrez-le.',type:'CRYPTO',players:8},
+{ id:4,title:'Analyse comportementale',difficulty:'medium',xp:120,description:'Analysez le comportement d\'un individu sur les réseaux sociaux.',type:'ANALYSE',players:15},
+{ id:5,title:'Dead Drop IRL',difficulty:'hard',xp:250,description:'Mission terrain: dead drop physique documenté.',type:'TERRAIN',players:5},
+{ id:6,title:'Phishing éthique',difficulty:'medium',xp:150,description:'Créer une campagne de phishing éducative.',type:'CYBER',players:18},
+{ id:7,title:'Infiltration: Événement cible',difficulty:'hard',xp:300,description:'Collectez 5 infos sans vous faire remarquer.',type:'INFILTRATION',players:3},
+{ id:8,title:'Créer une identité de couverture',difficulty:'easy',xp:75,description:'Construisez une identité crédible.',type:'COUVERTURE',players:31},
+{ id:9,title:'Détecter une fake news',difficulty:'easy',xp:50,description:'Identifier 3 fake news.',type:'FACT-CHECK',players:89},
+{ id:10,title:'Cartographier vos données personnelles',difficulty:'easy',xp:60,description:'Lister vos services en ligne.',type:'VIE PRIVÉE',players:134},
+{ id:11,title:'Comprendre un biais cognitif',difficulty:'easy',xp:75,description:'Identifier un biais cognitif.',type:'PSYCHO',players:67},
+{ id:12,title:'Analyse critique d\'un article',difficulty:'medium',xp:100,description:'Analyse critique 300 mots.',type:'ESPRIT CRITIQUE',players:52},
+{ id:13,title:'Tracer une supply chain',difficulty:'medium',xp:120,description:'Tracer la fabrication d\'un objet.',type:'ÉCONOMIE',players:43},
+{ id:14,title:'Décrypter un algorithme social',difficulty:'medium',xp:130,description:'Observer les patterns de votre fil.',type:'TECH',players:78},
+{ id:15,title:'Budgétiser un projet citoyen',difficulty:'medium',xp:110,description:'Créer un budget détaillé.',type:'CITOYEN',players:38},
+{ id:16,title:'Comprendre une loi',difficulty:'medium',xp:140,description:'Lire et résumer une loi.',type:'JURIDIQUE',players:29},
+{ id:17,title:'Calculer votre empreinte carbone',difficulty:'easy',xp:80,description:'Calculer et réduire vos émissions.',type:'ÉCOLOGIE',players:156},
+{ id:18,title:'Mener une enquête de terrain',difficulty:'hard',xp:200,description:'Enquête locale documentée.',type:'ENQUÊTE',players:18},
+{ id:19,title:'Comprendre les statistiques',difficulty:'medium',xp:100,description:'Analyser des statistiques médiatiques.',type:'DATA',players:41},
+{ id:20,title:'Décoder une pub',difficulty:'easy',xp:70,description:'Analyser 3 publicités.',type:'MARKETING',players:93},
+{ id:21,title:'Participer à une consultation publique',difficulty:'medium',xp:150,description:'Rédiger un avis officiel.',type:'DÉMOCRATIE',players:22},
+{ id:22,title:'Comprendre un conflit géopolitique',difficulty:'hard',xp:180,description:'Analyse complète d\'un conflit.',type:'GÉOPOLITIQUE',players:31},
+{ id:23,title:'Expérimenter la désobéissance civile',difficulty:'medium',xp:120,description:'Études de cas historiques.',type:'HISTOIRE',players:27},
+{ id:24,title:'Sécuriser vos communications',difficulty:'easy',xp:90,description:'Mettre en place sécurité numérique.',type:'CYBERSEC',players:187},
+{ id:25,title:'Comprendre la finance personnelle',difficulty:'medium',xp:110,description:'Budgets personnels comparés.',type:'FINANCE',players:102},
+{ id:26,title:'Déconstruire un préjugé',difficulty:'hard',xp:160,description:'Changer de perspective.',type:'SOCIOLOGIE',players:35},
+{ id:27,title:'Créer un média alternatif',difficulty:'hard',xp:220,description:'Lancer un micro-média.',type:'JOURNALISME',players:14},
+{ id:28,title:'Analyser votre alimentation',difficulty:'easy',xp:65,description:'Analyse alimentaire 1 semaine.',type:'SANTÉ',players:143},
+{ id:29,title:'Comprendre le système électoral',difficulty:'medium',xp:100,description:'Fonctionnement électoral.',type:'POLITIQUE',players:48},
+{ id:30,title:'Traquer les lobbies',difficulty:'hard',xp:190,description:'Identifier l\'influence des lobbies.',type:'LOBBYING',players:19},
+{ id:31,title:'Réparer au lieu d\'acheter',difficulty:'easy',xp:75,description:'Réparer un objet.',type:'CONSOMMATION',players:121},
+{ id:32,title:'Comprendre l\'IA',difficulty:'medium',xp:130,description:'Tester et analyser une IA.',type:'IA',players:86},
+{ id:33,title:'Organiser une action collective',difficulty:'hard',xp:250,description:'Action citoyenne réelle.',type:'ACTIVISME',players:11},
+{ id:34,title:'Lire un contrat en entier',difficulty:'medium',xp:90,description:'Analyse contractuelle.',type:'DROIT',players:37},
+{ id:35,title:'Comprendre la monnaie',difficulty:'hard',xp:170,description:'Création monétaire expliquée.',type:'ÉCONOMIE',players:28},
+{ id:36,title:'Identifier une manipulation',difficulty:'medium',xp:110,description:'Décortiquer techniques de manipulation.',type:'RHÉTORIQUE',players:59},
+{ id:37,title:'Créer votre alternative',difficulty:'hard',xp:200,description:'Alternative open-source.',type:'TECH',players:24},
+{ id:38,title:'Questionner une évidence',difficulty:'hard',xp:180,description:'Analyse anthropologique.',type:'ANTHROPOLOGIE',players:33}
+]
 };
 
-let currentMission = null;
+let currentMission=null;
 
-function renderMissions() {
-    const board = document.getElementById('missionBoard');
-    board.innerHTML = '';
-    GameData.missions.forEach(m => {
-        const card = document.createElement('div');
-        card.className = 'mission-card';
-        card.innerHTML = `
-            <div class="mission-title">${m.title}</div>
-            <div class="difficulty diff-${m.difficulty}">${m.difficulty.toUpperCase()}</div>
-            <p>${m.description}</p>
-            <p>+${m.xp} XP</p>
-        `;
-        card.onclick = () => openMission(m);
-        board.appendChild(card);
-    });
+function renderMissions(){
+const board=document.getElementById('missionBoard');
+board.innerHTML='';
+GameData.missions.forEach(m=>{
+const c=document.createElement('div');
+c.className='mission-card';
+c.innerHTML=`<div class="mission-title">${m.title}</div>
+<span class="diff-${m.difficulty}">${m.difficulty.toUpperCase()}</span>
+<p>${m.description}</p>
+<p>+${m.xp} XP · ${m.players} joueurs</p>`;
+c.onclick=()=>openMission(m);
+board.appendChild(c);
+});
 }
 
-function openMission(mission) {
-    currentMission = mission;
-    document.getElementById('modalMissionTitle').textContent = mission.title;
-    document.getElementById('modalMissionDesc').textContent = mission.description;
-    document.getElementById('missionModal').classList.add('active');
+function openMission(m){
+currentMission=m;
+document.getElementById('modalMissionTitle').textContent=m.title;
+document.getElementById('modalMissionDesc').textContent=m.description;
+document.getElementById('missionModal').classList.add('active');
 }
 
-function closeModal() {
-    document.getElementById('missionModal').classList.remove('active');
-    document.getElementById('missionResponse').value = '';
+function closeModal(){
+document.getElementById('missionModal').classList.remove('active');
+document.getElementById('missionResponse').value='';
 }
 
-function submitMission() {
-    if (!currentMission) return;
-    const txt = document.getElementById('missionResponse').value.trim();
-    if (!txt) return alert('Réponse requise');
-
-    GameData.player.xp += currentMission.xp;
-    GameData.player.missions++;
-    saveGame();
-    closeModal();
-    alert(`Mission validée +${currentMission.xp} XP`);
+function submitMission(){
+if(!currentMission)return;
+const txt=document.getElementById('missionResponse').value.trim();
+if(!txt)return alert('Réponse requise');
+GameData.player.xp+=currentMission.xp;
+GameData.player.missions++;
+localStorage.setItem('aegis_larp_game',JSON.stringify(GameData));
+closeModal();
+alert('Mission validée');
 }
 
-function saveGame() {
-    localStorage.setItem('aegis_larp_game', JSON.stringify(GameData));
-}
-
-function loadGame() {
-    const data = localStorage.getItem('aegis_larp_game');
-    if (data) Object.assign(GameData, JSON.parse(data));
-}
-
-loadGame();
 renderMissions();
 </script>
 </body>
 </html>
-
