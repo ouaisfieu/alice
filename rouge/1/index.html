@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FAKE NEWS — AEGIS / PANGO SYSTEM</title>
+
+<style>
+:root{
+--bg:#0a0e1a;--panel:#151b2e;--border:#2a3f5f;
+--green:#7bed9f;--purple:#c77dff;--red:#ff6b6b;--yellow:#ffd43b
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Courier New,monospace;background:var(--bg);color:#e0e0e0}
+header{padding:40px 20px;text-align:center;border-bottom:3px solid var(--green)}
+h1{color:var(--green);text-shadow:0 0 20px var(--green)}
+.sub{opacity:.8;margin-top:10px}
+.container{max-width:1400px;margin:auto;padding:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
+.card{background:var(--panel);border:2px solid var(--border);padding:20px;cursor:pointer;transition:.3s}
+.card:hover{border-color:var(--purple);box-shadow:0 0 25px rgba(199,125,255,.3);transform:translateY(-5px)}
+.title{color:var(--purple);font-weight:bold;margin-bottom:8px}
+.diff{font-size:11px;padding:4px 10px;display:inline-block;margin-bottom:10px}
+.easy{background:var(--green);color:#000}
+.medium{background:var(--yellow);color:#000}
+.hard{background:var(--red);color:#fff}
+.meta{font-size:11px;opacity:.7;margin-top:10px}
+button{background:none;border:2px solid var(--green);color:var(--green);padding:12px;width:100%;cursor:pointer}
+button:hover{background:var(--green);color:#000}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);align-items:center;justify-content:center;z-index:1000}
+.modal.active{display:flex}
+.modal-box{background:var(--panel);border:3px solid var(--purple);padding:30px;max-width:800px;width:100%}
+textarea{width:100%;min-height:150px;background:#0a0e1a;color:#e0e0e0;border:2px solid var(--border);padding:15px}
+.stats{display:flex;gap:20px;margin:30px 0;flex-wrap:wrap}
+.stat{flex:1;background:var(--panel);border:2px solid var(--border);padding:20px;text-align:center}
+.stat b{color:var(--green);font-size:32px}
+footer{padding:40px 20px;text-align:center;font-size:12px;opacity:.6}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>FAKE NEWS — AEGIS / PANGO</h1>
+<div class="sub">MMO IRL & ONLINE · ASYNCHRONE · SANS MJ · SANS RÈGLES ÉCRITES</div>
+<div class="sub" style="color:var(--purple)">Toute information est vraie tant qu’elle produit des effets</div>
+</header>
+
+<div class="container">
+
+<div class="stats">
+<div class="stat"><b id="xp">0</b><div>XP COGNITIF</div></div>
+<div class="stat"><b id="done">0</b><div>MISSIONS DÉCLARÉES</div></div>
+<div class="stat"><b id="rank">RECRUE</b><div>STATUT</div></div>
+</div>
+
+<div class="grid" id="missions"></div>
+</div>
+
+<div class="modal" id="modal">
+<div class="modal-box">
+<h2 id="mTitle"></h2>
+<p id="mDesc" style="margin:15px 0"></p>
+<textarea id="response" placeholder="Décrivez ce que vous avez fait. Liens, preuves, récits. Rien n’est vérifié."></textarea>
+<button onclick="submit()">DÉCLARER COMME EFFECTUÉ</button>
+<button onclick="closeM()" style="border-color:var(--red);color:var(--red)">ANNULER</button>
+</div>
+</div>
+
+<footer>
+Système non certifié · Aucun responsable identifié · Compatible Éducation permanente · PANGO-INDEX/2030
+</footer>
+
+<script>
+const missions=[
+{t:"OSINT — Identifier une cible",d:"easy",xp:50,txt:"Identifier une personne ou organisation à partir d’indices publics. Documenter la méthode.",p:23},
+{t:"Extraire une information sans alerter",d:"medium",xp:100,txt:"Obtenir une information sans dévoiler l’objectif réel.",p:12},
+{t:"Déchiffrement d’un message",d:"hard",xp:200,txt:"Un message est intercepté. Le sens importe plus que la solution.",p:8},
+{t:"Analyse comportementale",d:"medium",xp:120,txt:"Déduire des traits à partir d’activités visibles.",p:15},
+{t:"Dead Drop IRL",d:"hard",xp:250,txt:"Créer un dépôt physique discret. Preuve indirecte suffisante.",p:5},
+{t:"Détecter une fake news",d:"easy",xp:50,txt:"Identifier 3 fake news récentes et expliquer le mécanisme.",p:89},
+{t:"Cartographier ses données personnelles",d:"easy",xp:60,txt:"Lister où et comment vos données circulent.",p:134},
+{t:"Comprendre un biais cognitif",d:"easy",xp:75,txt:"Identifier un biais dans votre raisonnement récent.",p:67},
+{t:"Tracer une supply chain",d:"medium",xp:120,txt:"Remonter la chaîne de production d’un objet banal.",p:43},
+{t:"Questionner une évidence sociale",d:"hard",xp:180,txt:"Déconstruire une vérité considérée comme acquise.",p:33}
+];
+
+let state=JSON.parse(localStorage.getItem("fake_news_state"))||{xp:0,done:0};
+const grid=document.getElementById("missions");
+missions.forEach((m,i)=>{
+const c=document.createElement("div");
+c.className="card";
+c.innerHTML=`<div class="title">${m.t}</div>
+<div class="diff ${m.d}">${m.d.toUpperCase()}</div>
+<div>${m.txt}</div>
+<div class="meta">+${m.xp} XP · ${m.p} participants</div>`;
+c.onclick=()=>openM(i);
+grid.appendChild(c);
+});
+
+function update(){
+document.getElementById("xp").textContent=state.xp;
+document.getElementById("done").textContent=state.done;
+document.getElementById("rank").textContent=
+state.xp>800?"AGENT":state.xp>300?"OBSERVATEUR":"RECRUE";
+localStorage.setItem("fake_news_state",JSON.stringify(state));
+}
+update();
+
+let current=null;
+function openM(i){
+current=i;
+document.getElementById("mTitle").textContent=missions[i].t;
+document.getElementById("mDesc").textContent=missions[i].txt;
+document.getElementById("modal").classList.add("active");
+}
+function closeM(){
+document.getElementById("modal").classList.remove("active");
+document.getElementById("response").value="";
+}
+function submit(){
+if(current===null)return;
+state.xp+=missions[current].xp;
+state.done++;
+update();
+closeM();
+}
+</script>
+
+</body>
+</html>
